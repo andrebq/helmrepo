@@ -1,0 +1,12 @@
+apiVersion: v2
+name: couchdb
+
+# In the future I'll add support for multiple nodes, but for now
+# single node it is.
+description: Single node couchdb setup
+
+type: application
+
+version: 0.1.0
+
+appVersion: 3.1.1
