@@ -1,0 +1,21 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ template "vault.fullname" . }}
+  labels:
+    app: {{ template "vault.name" . }}
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+    heritage: {{ .Release.Service | quote }}
+    release: {{ .Release.Name | quote }}
+data:
+  config.hcl: |
+    ui = {{ coalesce .Values.config.ui }}
+    storage "couchdb" {
+      endpoint = "{{ .Values.config.storage.endpoint }}"
+    }
+
+    listener "tcp" {
+      address = "0.0.0.0:8200"
+      tls_disable = {{ coalesce .Values.config.listener.tcp.tls_disable false }}
+    }
