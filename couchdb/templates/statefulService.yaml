@@ -1,0 +1,118 @@
+---
+apiVersion:  apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ include "couchdb.fullname" . }}
+  labels:
+    {{- include "couchdb.labels" . | nindent 4 }}
+spec:
+  replicas: 1
+  serviceName: {{ include "couchdb.fullname" .}}
+  podManagementPolicy: Parallel
+  selector:
+    matchLabels:
+      {{- include "couchdb.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      {{- with .Values.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        {{- include "couchdb.selectorLabels" . | nindent 8 }}
+    spec:
+      serviceAccountName: {{ include "couchdb.fullname" . }}
+      initContainers:
+        - name: init-myservice
+          image: busybox:1.33-uclibc
+          command: ['sh', '-c', "echo '[admins]' >> /opt/couchdb/etc/local.d/10-admins.ini && echo \"${COUCHDB_USER} = ${COUCHDB_PASSWORD}\" >> /opt/couchdb/etc/local.d/10-admins.ini"]
+          env:
+            - name: COUCHDB_USER
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "couchdb.fullname" . }}
+                  key: adminUsername
+            - name: COUCHDB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "couchdb.fullname" . }}
+                  key: adminPassword
+          volumeMounts:
+            - name: config-storage
+              mountPath: /opt/couchdb/etc/local.d
+      containers:
+        - name: couchdb
+          image: "couchdb:3.1.0"
+          imagePullPolicy: IfNotPresent
+          command: [ 'bash' ]
+          args: [ '-c', '/opt/couchdb/bin/couchdb']
+          ports:
+            - name: couchdb
+              containerPort: 5984
+            - name: epmd
+              containerPort: 4369
+            - containerPort: 9100
+            # - name: COUCHDB_SECRET
+            #   valueFrom:
+            #     secretKeyRef:
+            #       name: {{ include "couchdb.fullname" . }}
+            #       key: cookieAuthSecret
+            # - name: ERL_FLAGS
+            #   value: " -name couchdb  -setcookie monster "
+          # livenessProbe:
+          #   httpGet:
+          #     path: /_up
+          #     port: 5984
+          #   failureThreshold: 3
+          #   initialDelaySeconds: 0
+          #   periodSeconds: 10
+          #   successThreshold: 1
+          #   timeoutSeconds: 1
+          # readinessProbe:
+          #   httpGet:
+          #     path: /_up
+          #     port: 5984
+          #   failureThreshold: 3
+          #   initialDelaySeconds: 0
+          #   periodSeconds: 10
+          #   successThreshold: 1
+          #   timeoutSeconds: 1
+          resources:
+            {}
+          volumeMounts:
+          - name: readonly-config
+            mountPath: /opt/couchdb/etc/default.d
+          - name: config-storage
+            mountPath: /opt/couchdb/etc/local.d
+          - name: database-storage
+            mountPath: /opt/couchdb/data
+      volumes:
+        - name: readonly-config
+          configMap:
+            name: {{ include "couchdb.fullname" . }}
+            items:
+              - key: inifile
+                path: chart.ini
+  volumeClaimTemplates:
+    - metadata:
+        name: database-storage
+        labels:
+          {{- include "couchdb.selectorLabels" . | nindent 10 }}
+      spec:
+        accessModes:
+          - "ReadWriteOnce"
+        resources:
+          requests:
+            storage: "{{ .Values.persistence.data.size }}"
+        storageClassName: "{{ .Values.persistence.data.storageClassName }}"
+    - metadata:
+        name: config-storage
+        labels:
+          {{- include "couchdb.selectorLabels" . | nindent 10 }}
+      spec:
+        accessModes:
+          - "ReadWriteOnce"
+        resources:
+          requests:
+            storage: "{{ .Values.persistence.config.size }}"
+        storageClassName: "{{ .Values.persistence.config.storageClassName }}"

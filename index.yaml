@@ -1,0 +1,25 @@
+apiVersion: v1
+entries:
+  couchdb:
+  - apiVersion: v2
+    appVersion: 3.1.1
+    created: "2021-01-11T19:37:12.8463731+01:00"
+    description: Single node couchdb setup
+    digest: d3c606221b0bfaad3f1775eebede14e024d05710b9f9396aa488db6a12976afd
+    name: couchdb
+    type: application
+    urls:
+    - couchdb-0.1.0.tgz
+    version: 0.1.0
+  vault:
+  - apiVersion: v2
+    appVersion: 1.6.1
+    created: "2021-01-11T19:37:12.8463731+01:00"
+    description: A Helm chart for Vault using CouchDB as backend
+    digest: 8ae8e631d3416d8f18d7c52f48aaadda594b7d3f45a4f553ada9903030fb3f96
+    name: vault
+    type: application
+    urls:
+    - vault-0.1.0.tgz
+    version: 0.1.0
+generated: "2021-01-11T19:37:12.8424108+01:00"
